@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Available Books</title>
+<style>
+:root{
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --text:#1f2937;
+  --muted:#6b7280;
+  --border:#e5e7eb;
+  --accent:#2563eb;
+  --accent-2:#1d4ed8;
+  --soft:#eff6ff;
+  --shadow:0 10px 30px rgba(15,23,42,.08);
+  --shadow-sm:0 4px 14px rgba(15,23,42,.06);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:linear-gradient(180deg,#f8fbff 0%,#f6f7fb 180px);
+  color:var(--text);
+}
+.wrap{
+  max-width:1240px;
+  margin:auto;
+  padding:28px 20px 40px;
+}
+.hero{
+  display:grid;
+  grid-template-columns:1.3fr .7fr;
+  gap:18px;
+  margin-bottom:20px;
+}
+.hero-card,.stats-card,.panel,.helper{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+}
+.hero-card{
+  padding:24px;
+}
+.hero h1{
+  margin:0 0 8px;
+  font-size:2.25rem;
+  line-height:1.05;
+}
+.sub{
+  color:var(--muted);
+  margin:0;
+  line-height:1.55;
+}
+.stats-card{
+  padding:20px;
+  display:grid;
+  gap:12px;
+  align-content:start;
+}
+.stat-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+}
+.stat{
+  background:#fafafa;
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:14px;
+}
+.stat-label{
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:6px;
+}
+.stat-value{
+  font-size:1.4rem;
+  font-weight:700;
+}
+.controls{
+  display:grid;
+  grid-template-columns:1.4fr 180px 180px 170px;
+  gap:12px;
+  margin-bottom:18px;
+}
+input,select,button,textarea{font:inherit}
+input,select,textarea{
+  width:100%;
+  padding:13px 14px;
+  border:1px solid #d1d5db;
+  border-radius:14px;
+  background:white;
+}
+button,.button{
+  border:none;
+  border-radius:14px;
+  background:var(--accent);
+  color:white;
+  padding:13px 14px;
+  font-weight:700;
+  cursor:pointer;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+button:hover,.button:hover{background:var(--accent-2)}
+button.secondary,.button.secondary{background:#111827}
+button.secondary:hover,.button.secondary:hover{background:#000}
+.panel{
+  padding:18px;
+}
+.toolbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+}
+.status{
+  color:var(--muted);
+  font-size:14px;
+}
+.chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.chip{
+  border:1px solid var(--border);
+  background:#fff;
+  color:#374151;
+  border-radius:999px;
+  padding:8px 12px;
+  font-size:12px;
+  cursor:pointer;
+}
+.chip.active{
+  background:var(--soft);
+  border-color:#bfdbfe;
+  color:#1d4ed8;
+  font-weight:700;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+  gap:18px;
+}
+.book{
+  background:white;
+  border-radius:20px;
+  border:1px solid var(--border);
+  box-shadow:var(--shadow-sm);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  min-height:100%;
+}
+.cover-wrap{
+  position:relative;
+  aspect-ratio:4/5;
+  background:linear-gradient(135deg,#f8fafc,#eef2ff);
+  overflow:hidden;
+}
+.book img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.no-image{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  text-align:center;
+  color:#64748b;
+  font-weight:700;
+  background:linear-gradient(135deg,#eff6ff,#f8fafc);
+}
+.badges{
+  position:absolute;
+  top:10px;
+  left:10px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.badge{
+  background:rgba(255,255,255,.92);
+  color:#1f2937;
+  backdrop-filter:blur(6px);
+  border:1px solid rgba(229,231,235,.9);
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:700;
+}
+.book-body{
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  flex:1;
+}
+.book-title{
+  font-weight:700;
+  font-size:16px;
+  line-height:1.35;
+}
+.book-author{
+  font-size:13px;
+  color:var(--muted);
+}
+.book-price{
+  font-weight:800;
+  font-size:18px;
+  color:#0f172a;
+}
+.book-notes{
+  font-size:13px;
+  color:var(--muted);
+  line-height:1.45;
+  min-height:36px;
+}
+.meta{
+  margin-top:auto;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  font-size:12px;
+  color:var(--muted);
+}
+.empty{
+  padding:36px 18px;
+  text-align:center;
+  color:var(--muted);
+}
+.helper{
+  margin-top:24px;
+  padding:20px;
+}
+.helper h3{margin:0 0 8px}
+.helper p{margin:0 0 12px;color:var(--muted);line-height:1.5}
+.helper-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:12px;
+}
+textarea{
+  min-height:140px;
+  border-radius:14px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+.footer-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+  margin-top:12px;
+}
+.tests{
+  font-size:12px;
+  color:var(--muted);
+}
+@media(max-width:980px){
+  .hero{grid-template-columns:1fr}
+  .controls{grid-template-columns:1fr 1fr}
+}
+@media(max-width:680px){
+  .controls{grid-template-columns:1fr}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .hero h1{font-size:1.85rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <div class="hero-card">
+      <h1>SEP Book Corner</h1>
+      <p class="sub">Browse donated books currently available from the Google Sheet. Search by title or author, filter by category, and sort to find what you want faster.</p>
+    </div>
+    <div class="stats-card">
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-label">Books</div><div class="stat-value" id="statBooks">0</div></div>
+        <div class="stat"><div class="stat-label">Categories</div><div class="stat-value" id="statCategories">0</div></div>
+        <div class="stat"><div class="stat-label">Lowest Price</div><div class="stat-value" id="statLow">—</div></div>
+        <div class="stat"><div class="stat-label">Highest Price</div><div class="stat-value" id="statHigh">—</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="controls">
+    <input id="search" placeholder="Search title, author, notes, or batch" />
+    <select id="sort">
+      <option value="title">Sort by title</option>
+      <option value="author">Sort by author</option>
+      <option value="priceLow">Price: low to high</option>
+      <option value="priceHigh">Price: high to low</option>
+    </select>
+    <select id="categoryFilter">
+      <option value="All">All categories</option>
+    </select>
+    <button id="loadBtn">Load from Sheet</button>
+  </section>
+
+  <section class="panel">
+    <div class="toolbar">
+      <div id="status" class="status">Click “Load from Sheet” to load books.</div>
+      <div id="chips" class="chips"></div>
+    </div>
+    <div id="grid" class="grid"></div>
+  </section>
+
+  <section class="helper">
+    <h3>Fallback: Paste CSV</h3>
+    <p>If loading fails in a preview or local file environment, open the published CSV and paste it below.</p>
+    <div class="helper-actions">
+      <a class="button secondary" href="https://docs.google.com/spreadsheets/d/e/2PACX-1vQESGCHdmHnboTMETf8-CK7RsnYrw6mmHDgk-eCJ0D7kNl2KyiRymMOnESB7KbOqMNKQfD-dRozhO5M/pub?gid=1806204221&single=true&output=csv" target="_blank" rel="noopener noreferrer">Open Published CSV</a>
+      <button id="loadCsvBtn" type="button">Load Pasted CSV</button>
+      <button id="sampleBtn" class="secondary" type="button">Load Sample Data</button>
+    </div>
+    <textarea id="csvInput" placeholder="Paste CSV here"></textarea>
+    <div class="footer-row">
+      <div id="tests" class="tests"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQESGCHdmHnboTMETf8-CK7RsnYrw6mmHDgk-eCJ0D7kNl2KyiRymMOnESB7KbOqMNKQfD-dRozhO5M/pub?gid=1806204221&single=true&output=csv";
+
+const SAMPLE_CSV = `Batch ID,Book Title,Author,Price,Notes,Picture Link
+20260305-02,Barron's AP Biology,,5,Good condition,
+20260305-02,Barron's AP Statistics,Jane Doe,7,Some highlighting,
+20260301-01,The Great Gatsby,F. Scott Fitzgerald,4,Classic literature,
+20260302-01,Princeton Review SAT,Princeton Review,8,Test prep book,
+20260303-04,Campbell Biology,Lisa Urry,12,Textbook,`;
+
+let books = [];
+let activeChip = 'All';
+
+function parseCSV(text){
+  const rows=[];
+  let row=[];
+  let val='';
+  let quote=false;
+
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    const n=text[i+1];
+    if(c==='"'){
+      if(quote && n==='"'){ val+='"'; i++; }
+      else quote=!quote;
+    } else if(c===',' && !quote){
+      row.push(val); val='';
+    } else if((c==='\n' || c==='\r') && !quote){
+      if(c==='\r' && n==='\n') i++;
+      row.push(val);
+      rows.push(row);
+      row=[];
+      val='';
+    } else {
+      val+=c;
+    }
+  }
+  if(val || row.length){ row.push(val); rows.push(row); }
+  return rows.filter(r => r.some(cell => String(cell).trim() !== ''));
+}
+
+function rowsToRecords(rows){
+  if(!rows.length) return [];
+  const headers = rows[0].map(h => String(h).trim());
+  return rows.slice(1).map(r => {
+    const obj = {};
+    headers.forEach((h,i) => obj[h] = r[i] || '');
+    return obj;
+  });
+}
+
+function escapeHtml(s){
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+function numericPrice(value){
+  const n = parseFloat(String(value).replace(/[^0-9.\-]/g,''));
+  return Number.isFinite(n) ? n : null;
+}
+
+function formatPrice(value){
+  const n = numericPrice(value);
+  return n === null ? '—' : `$${n.toFixed(n % 1 === 0 ? 0 : 2)}`;
+}
+
+function inferCategory(book){
+  const text = `${book.title} ${book.notes} ${book.author}`.toLowerCase();
+  if(/sat|act|ap |barron|princeton review|prep/.test(text)) return 'Test Prep';
+  if(/biology|chemistry|physics|science|campbell/.test(text)) return 'Science';
+  if(/math|calculus|algebra|statistics/.test(text)) return 'Math';
+  if(/novel|literature|gatsby|poem|fiction|english/.test(text)) return 'Literature';
+  if(/history|government|economics|psychology/.test(text)) return 'Social Studies';
+  if(/textbook/.test(text)) return 'Textbook';
+  return 'General';
+}
+
+function normalize(records){
+  return records.map(r => ({
+    batch: r['Batch ID'] || '',
+    title: r['Book Title'] || '',
+    author: r['Author'] || '',
+    price: r['Price'] || r['Suggested Price'] || '',
+    notes: r['Notes'] || '',
+    img: r['Picture Link'] || '',
+    category: ''
+  })).filter(b => b.title).map(b => ({ ...b, category: inferCategory(b) }));
+}
+
+function updateStats(list){
+  document.getElementById('statBooks').textContent = list.length;
+  const categories = new Set(list.map(b => b.category));
+  document.getElementById('statCategories').textContent = categories.size;
+  const prices = list.map(b => numericPrice(b.price)).filter(v => v !== null);
+  document.getElementById('statLow').textContent = prices.length ? formatPrice(Math.min(...prices)) : '—';
+  document.getElementById('statHigh').textContent = prices.length ? formatPrice(Math.max(...prices)) : '—';
+}
+
+function updateCategoryOptions(){
+  const select = document.getElementById('categoryFilter');
+  const categories = ['All', ...Array.from(new Set(books.map(b => b.category))).sort()];
+  select.innerHTML = categories.map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`).join('');
+  if(!categories.includes(activeChip)) activeChip = 'All';
+  select.value = activeChip;
+
+  const chips = document.getElementById('chips');
+  chips.innerHTML = categories.slice(0,7).map(cat =>
+    `<button class="chip ${cat === activeChip ? 'active' : ''}" data-chip="${escapeHtml(cat)}">${escapeHtml(cat)}</button>`
+  ).join('');
+
+  chips.querySelectorAll('.chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeChip = btn.getAttribute('data-chip');
+      select.value = activeChip;
+      render();
+    });
+  });
+}
+
+function render(){
+  const grid = document.getElementById('grid');
+  const status = document.getElementById('status');
+  const search = document.getElementById('search').value.toLowerCase().trim();
+  const sort = document.getElementById('sort').value;
+  const selectedCategory = document.getElementById('categoryFilter').value;
+  activeChip = selectedCategory;
+
+  let list = books.filter(b => {
+    const matchesSearch = `${b.title} ${b.author} ${b.notes} ${b.batch}`.toLowerCase().includes(search);
+    const matchesCategory = selectedCategory === 'All' || b.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  if(sort === 'author') list.sort((a,b) => (a.author || '').localeCompare(b.author || '') || a.title.localeCompare(b.title));
+  else if(sort === 'priceLow') list.sort((a,b) => (numericPrice(a.price) ?? Infinity) - (numericPrice(b.price) ?? Infinity) || a.title.localeCompare(b.title));
+  else if(sort === 'priceHigh') list.sort((a,b) => (numericPrice(b.price) ?? -Infinity) - (numericPrice(a.price) ?? -Infinity) || a.title.localeCompare(b.title));
+  else list.sort((a,b) => a.title.localeCompare(b.title));
+
+  updateStats(books);
+  updateCategoryOptions();
+
+  if(!list.length){
+    grid.innerHTML = `<div class="empty">No books found for this search or filter.</div>`;
+    status.textContent = books.length ? 'No matching books found.' : 'No books loaded yet.';
+    return;
+  }
+
+  status.textContent = `${list.length} shown • ${books.length} total`;
+  grid.innerHTML = '';
+
+  list.forEach(b => {
+    const hasImage = Boolean(String(b.img).trim());
+    const card = document.createElement('article');
+    card.className = 'book';
+    card.innerHTML = `
+      <div class="cover-wrap">
+        <div class="badges">
+          <span class="badge">${escapeHtml(b.category)}</span>
+          ${b.batch ? `<span class="badge">Batch ${escapeHtml(b.batch)}</span>` : ''}
+        </div>
+        ${hasImage ? `<img src="${escapeHtml(b.img)}" alt="${escapeHtml(b.title)}" onerror="this.remove(); this.parentNode.insertAdjacentHTML('beforeend','<div class=&quot;no-image&quot;>No image available</div>');">` : `<div class="no-image">No image available</div>`}
+      </div>
+      <div class="book-body">
+        <div class="book-title">${escapeHtml(b.title)}</div>
+        <div class="book-author">${escapeHtml(b.author || 'Unknown author')}</div>
+        <div class="book-price">${formatPrice(b.price)}</div>
+        <div class="book-notes">${escapeHtml(b.notes || 'No notes provided.')}</div>
+        <div class="meta">
+          <span>${escapeHtml(b.category)}</span>
+          <span>${b.batch ? `Batch ${escapeHtml(b.batch)}` : ''}</span>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function loadFromText(text){
+  const rows = parseCSV(text);
+  const records = rowsToRecords(rows);
+  books = normalize(records);
+  activeChip = 'All';
+  document.getElementById('categoryFilter').value = 'All';
+  render();
+}
+
+async function loadFromSheet(){
+  const status = document.getElementById('status');
+  status.textContent = 'Loading books...';
+  try{
+    const res = await fetch(CSV_URL, { cache:'no-store' });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    loadFromText(text);
+  }catch(err){
+    status.textContent = 'Failed to fetch sheet. Use the CSV paste fallback below.';
+    console.error(err);
+  }
+}
+
+function runTests(){
+  const tests = [];
+  const assert = (name, cond) => tests.push(`${cond ? '✓' : '✗'} ${name}`);
+
+  const rows = parseCSV('A,B\n1,2');
+  assert('parse basic CSV', rows.length === 2 && rows[1][0] === '1');
+
+  const quoted = parseCSV('Title,Notes\n"Book, One","Note, here"');
+  assert('parse quoted comma', quoted[1][0] === 'Book, One' && quoted[1][1] === 'Note, here');
+
+  const sampleRecs = rowsToRecords(parseCSV(SAMPLE_CSV));
+  assert('map headers to records', sampleRecs[0]['Book Title'] === "Barron's AP Biology");
+
+  const norm = normalize(sampleRecs);
+  assert('normalize keeps all sample books', norm.length === 5);
+  assert('normalize keeps blank author', norm[0].author === '');
+  assert('price parser handles numbers', numericPrice('$7.50') === 7.5);
+  assert('category inference works for test prep', inferCategory({title:'Princeton Review SAT',notes:'',author:''}) === 'Test Prep');
+  assert('category inference works for science', inferCategory({title:'Campbell Biology',notes:'Textbook',author:''}) === 'Science');
+
+  document.getElementById('tests').textContent = tests.join(' | ');
+}
+
+document.getElementById('search').addEventListener('input', render);
+document.getElementById('sort').addEventListener('change', render);
+document.getElementById('categoryFilter').addEventListener('change', render);
+document.getElementById('loadBtn').addEventListener('click', loadFromSheet);
+document.getElementById('loadCsvBtn').addEventListener('click', () => loadFromText(document.getElementById('csvInput').value));
+document.getElementById('sampleBtn').addEventListener('click', () => {
+  document.getElementById('csvInput').value = SAMPLE_CSV;
+  loadFromText(SAMPLE_CSV);
+});
+
+runTests();
+</script>
+</body>
+</html>
