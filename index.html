@@ -190,6 +190,7 @@ button.secondary:hover,.button.secondary:hover{background:#000}
   display:flex;
   flex-wrap:wrap;
   gap:8px;
+  z-index:2;
 }
 .badge{
   background:rgba(255,255,255,.92);
@@ -339,7 +340,7 @@ textarea{
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQESGCHdmHnboTMETf8-CK7RsnYrw6mmHDgk-eCJ0D7kNl2KyiRymMOnESB7KbOqMNKQfD-dRozhO5M/pub?gid=1806204221&single=true&output=csv";
 
 const SAMPLE_CSV = `Batch ID,Book Title,Author,Price,Notes,Picture Link
-20260305-02,Barron's AP Biology,,5,Good condition,
+20260305-02,Barron's AP Biology,,5,Good condition,https://drive.google.com/open?id=1k3Abx6vlVNaaEZRGDtxObhZXAEorgb2q
 20260305-02,Barron's AP Statistics,Jane Doe,7,Some highlighting,
 20260301-01,The Great Gatsby,F. Scott Fitzgerald,4,Classic literature,
 20260302-01,Princeton Review SAT,Princeton Review,8,Test prep book,
@@ -349,30 +350,34 @@ let books = [];
 let activeChip = 'All';
 
 function parseCSV(text){
-  const rows=[];
-  let row=[];
-  let val='';
-  let quote=false;
+  const rows = [];
+  let row = [];
+  let val = '';
+  let quote = false;
 
-  for(let i=0;i<text.length;i++){
-    const c=text[i];
-    const n=text[i+1];
-    if(c==='"'){
-      if(quote && n==='"'){ val+='"'; i++; }
-      else quote=!quote;
-    } else if(c===',' && !quote){
-      row.push(val); val='';
-    } else if((c==='\n' || c==='\r') && !quote){
-      if(c==='\r' && n==='\n') i++;
+  for(let i = 0; i < text.length; i++){
+    const c = text[i];
+    const n = text[i + 1];
+    if(c === '"'){
+      if(quote && n === '"'){ val += '"'; i++; }
+      else quote = !quote;
+    } else if(c === ',' && !quote){
+      row.push(val);
+      val = '';
+    } else if((c === '\n' || c === '\r') && !quote){
+      if(c === '\r' && n === '\n') i++;
       row.push(val);
       rows.push(row);
-      row=[];
-      val='';
+      row = [];
+      val = '';
     } else {
-      val+=c;
+      val += c;
     }
   }
-  if(val || row.length){ row.push(val); rows.push(row); }
+  if(val || row.length){
+    row.push(val);
+    rows.push(row);
+  }
   return rows.filter(r => r.some(cell => String(cell).trim() !== ''));
 }
 
@@ -381,7 +386,7 @@ function rowsToRecords(rows){
   const headers = rows[0].map(h => String(h).trim());
   return rows.slice(1).map(r => {
     const obj = {};
-    headers.forEach((h,i) => obj[h] = r[i] || '');
+    headers.forEach((h, i) => obj[h] = r[i] || '');
     return obj;
   });
 }
@@ -416,6 +421,45 @@ function inferCategory(book){
   return 'General';
 }
 
+function extractGoogleDriveId(url){
+  if(!url) return '';
+  const s = String(url).trim();
+
+  let m = s.match(/[?&]id=([^&]+)/i);
+  if(m) return m[1];
+
+  m = s.match(/\/file\/d\/([^/]+)/i);
+  if(m) return m[1];
+
+  m = s.match(/\/d\/([^/]+)/i);
+  if(m) return m[1];
+
+  return '';
+}
+
+function normalizeImageUrl(url){
+  const raw = String(url || '').trim();
+  if(!raw) return '';
+
+  const driveId = extractGoogleDriveId(raw);
+  if(driveId){
+    return {
+      original: raw,
+      candidates: [
+        `https://lh3.googleusercontent.com/d/${driveId}=w1200`,
+        `https://drive.google.com/thumbnail?id=${driveId}&sz=w1200`,
+        `https://drive.google.com/uc?export=view&id=${driveId}`,
+        `https://drive.google.com/uc?export=download&id=${driveId}`
+      ]
+    };
+  }
+
+  return {
+    original: raw,
+    candidates: [raw]
+  };
+}
+
 function normalize(records){
   return records.map(r => ({
     batch: r['Batch ID'] || '',
@@ -425,7 +469,9 @@ function normalize(records){
     notes: r['Notes'] || '',
     img: r['Picture Link'] || '',
     category: ''
-  })).filter(b => b.title).map(b => ({ ...b, category: inferCategory(b) }));
+  }))
+  .filter(b => b.title)
+  .map(b => ({ ...b, category: inferCategory(b) }));
 }
 
 function updateStats(list){
@@ -445,7 +491,7 @@ function updateCategoryOptions(){
   select.value = activeChip;
 
   const chips = document.getElementById('chips');
-  chips.innerHTML = categories.slice(0,7).map(cat =>
+  chips.innerHTML = categories.slice(0, 7).map(cat =>
     `<button class="chip ${cat === activeChip ? 'active' : ''}" data-chip="${escapeHtml(cat)}">${escapeHtml(cat)}</button>`
   ).join('');
 
@@ -456,6 +502,42 @@ function updateCategoryOptions(){
       render();
     });
   });
+}
+
+function attachImageWithFallback(container, title, rawUrl){
+  const normalized = normalizeImageUrl(rawUrl);
+
+  if(!normalized.candidates.length){
+    container.innerHTML = `<div class="no-image">No image available</div>`;
+    return;
+  }
+
+  const img = document.createElement('img');
+  img.alt = title || 'Book cover';
+  img.loading = 'lazy';
+  img.referrerPolicy = 'no-referrer';
+
+  let index = 0;
+
+  function tryNext(){
+    if(index >= normalized.candidates.length){
+      img.remove();
+      if(!container.querySelector('.no-image')){
+        container.insertAdjacentHTML('beforeend', `<div class="no-image">No image available</div>`);
+      }
+      return;
+    }
+    img.src = normalized.candidates[index++];
+  }
+
+  img.onerror = tryNext;
+  img.onload = () => {
+    const fallback = container.querySelector('.no-image');
+    if(fallback) fallback.remove();
+  };
+
+  container.appendChild(img);
+  tryNext();
 }
 
 function render(){
@@ -472,10 +554,15 @@ function render(){
     return matchesSearch && matchesCategory;
   });
 
-  if(sort === 'author') list.sort((a,b) => (a.author || '').localeCompare(b.author || '') || a.title.localeCompare(b.title));
-  else if(sort === 'priceLow') list.sort((a,b) => (numericPrice(a.price) ?? Infinity) - (numericPrice(b.price) ?? Infinity) || a.title.localeCompare(b.title));
-  else if(sort === 'priceHigh') list.sort((a,b) => (numericPrice(b.price) ?? -Infinity) - (numericPrice(a.price) ?? -Infinity) || a.title.localeCompare(b.title));
-  else list.sort((a,b) => a.title.localeCompare(b.title));
+  if(sort === 'author'){
+    list.sort((a,b) => (a.author || '').localeCompare(b.author || '') || a.title.localeCompare(b.title));
+  } else if(sort === 'priceLow'){
+    list.sort((a,b) => (numericPrice(a.price) ?? Infinity) - (numericPrice(b.price) ?? Infinity) || a.title.localeCompare(b.title));
+  } else if(sort === 'priceHigh'){
+    list.sort((a,b) => (numericPrice(b.price) ?? -Infinity) - (numericPrice(a.price) ?? -Infinity) || a.title.localeCompare(b.title));
+  } else {
+    list.sort((a,b) => a.title.localeCompare(b.title));
+  }
 
   updateStats(books);
   updateCategoryOptions();
@@ -490,16 +577,15 @@ function render(){
   grid.innerHTML = '';
 
   list.forEach(b => {
-    const hasImage = Boolean(String(b.img).trim());
     const card = document.createElement('article');
     card.className = 'book';
+
     card.innerHTML = `
       <div class="cover-wrap">
         <div class="badges">
           <span class="badge">${escapeHtml(b.category)}</span>
           ${b.batch ? `<span class="badge">Batch ${escapeHtml(b.batch)}</span>` : ''}
         </div>
-        ${hasImage ? `<img src="${escapeHtml(b.img)}" alt="${escapeHtml(b.title)}" onerror="this.remove(); this.parentNode.insertAdjacentHTML('beforeend','<div class=&quot;no-image&quot;>No image available</div>');">` : `<div class="no-image">No image available</div>`}
       </div>
       <div class="book-body">
         <div class="book-title">${escapeHtml(b.title)}</div>
@@ -512,6 +598,10 @@ function render(){
         </div>
       </div>
     `;
+
+    const coverWrap = card.querySelector('.cover-wrap');
+    attachImageWithFallback(coverWrap, b.title, b.img);
+
     grid.appendChild(card);
   });
 }
@@ -521,13 +611,13 @@ function loadFromText(text){
   const records = rowsToRecords(rows);
   books = normalize(records);
   activeChip = 'All';
-  document.getElementById('categoryFilter').value = 'All';
   render();
 }
 
 async function loadFromSheet(){
   const status = document.getElementById('status');
   status.textContent = 'Loading books...';
+
   try{
     const res = await fetch(CSV_URL, { cache:'no-store' });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -558,6 +648,12 @@ function runTests(){
   assert('price parser handles numbers', numericPrice('$7.50') === 7.5);
   assert('category inference works for test prep', inferCategory({title:'Princeton Review SAT',notes:'',author:''}) === 'Test Prep');
   assert('category inference works for science', inferCategory({title:'Campbell Biology',notes:'Textbook',author:''}) === 'Science');
+
+  const driveId = extractGoogleDriveId('https://drive.google.com/open?id=1k3Abx6vlVNaaEZRGDtxObhZXAEorgb2q');
+  assert('extract Google Drive id', driveId === '1k3Abx6vlVNaaEZRGDtxObhZXAEorgb2q');
+
+  const normalized = normalizeImageUrl('https://drive.google.com/open?id=1k3Abx6vlVNaaEZRGDtxObhZXAEorgb2q');
+  assert('normalize image candidates created', normalized.candidates.length > 0);
 
   document.getElementById('tests').textContent = tests.join(' | ');
 }
