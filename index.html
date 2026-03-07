@@ -82,7 +82,7 @@ body{
 }
 .controls{
   display:grid;
-  grid-template-columns:1.6fr 180px 180px;
+  grid-template-columns:1.4fr 180px 180px 170px;
   gap:12px;
   margin-bottom:18px;
 }
@@ -310,11 +310,12 @@ textarea{
     <select id="categoryFilter">
       <option value="All">All categories</option>
     </select>
+    <button id="loadBtn">Load from Sheet</button>
   </section>
 
   <section class="panel">
     <div class="toolbar">
-      <div id="status" class="status">Loading books...</div>
+      <div id="status" class="status">Click “Load from Sheet” to load books.</div>
       <div id="chips" class="chips"></div>
     </div>
     <div id="grid" class="grid"></div>
@@ -385,8 +386,7 @@ function rowsToRecords(rows){
   const headers = rows[0].map(h => String(h).trim());
   return rows.slice(1).map(r => {
     const obj = {};
-    headers.forEach((h, i) => obj[h] = r[i] || '';
-);
+    headers.forEach((h, i) => obj[h] = r[i] || '');
     return obj;
   });
 }
@@ -439,10 +439,7 @@ function extractGoogleDriveId(url){
 
 function normalizeImageUrl(url){
   const raw = String(url || '').trim();
-  if(!raw) return {
-    original: '',
-    candidates: []
-  };
+  if(!raw) return '';
 
   const driveId = extractGoogleDriveId(raw);
   if(driveId){
@@ -511,7 +508,7 @@ function attachImageWithFallback(container, title, rawUrl){
   const normalized = normalizeImageUrl(rawUrl);
 
   if(!normalized.candidates.length){
-    container.insertAdjacentHTML('beforeend', `<div class="no-image">No image available</div>`);
+    container.innerHTML = `<div class="no-image">No image available</div>`;
     return;
   }
 
@@ -620,6 +617,7 @@ function loadFromText(text){
 async function loadFromSheet(){
   const status = document.getElementById('status');
   status.textContent = 'Loading books...';
+
   try{
     const res = await fetch(CSV_URL, { cache:'no-store' });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -663,6 +661,7 @@ function runTests(){
 document.getElementById('search').addEventListener('input', render);
 document.getElementById('sort').addEventListener('change', render);
 document.getElementById('categoryFilter').addEventListener('change', render);
+document.getElementById('loadBtn').addEventListener('click', loadFromSheet);
 document.getElementById('loadCsvBtn').addEventListener('click', () => loadFromText(document.getElementById('csvInput').value));
 document.getElementById('sampleBtn').addEventListener('click', () => {
   document.getElementById('csvInput').value = SAMPLE_CSV;
@@ -670,7 +669,6 @@ document.getElementById('sampleBtn').addEventListener('click', () => {
 });
 
 runTests();
-loadFromSheet();
 </script>
 </body>
 </html>
