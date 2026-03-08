@@ -319,7 +319,8 @@ textarea{
     </div>
     <div id="grid" class="grid"></div>
   </section>
-
+<!--
+  
   <section class="helper">
     <h3>Fallback: Paste CSV</h3>
     <p>If loading fails in a preview or local file environment, open the published CSV and paste it below.</p>
@@ -333,6 +334,7 @@ textarea{
       <div id="tests" class="tests"></div>
     </div>
   </section>
+-->
 </div>
 
 <script>
@@ -654,17 +656,14 @@ function runTests(){
   const normalized = normalizeImageUrl('https://drive.google.com/open?id=1k3Abx6vlVNaaEZRGDtxObhZXAEorgb2q');
   assert('normalize image candidates created', normalized.candidates.length > 0);
 
-  document.getElementById('tests').textContent = tests.join(' | ');
+  const testsEl = document.getElementById('tests');
+  if (testsEl) testsEl.textContent = tests.join(' | ');
 }
 
 document.getElementById('search').addEventListener('input', render);
 document.getElementById('sort').addEventListener('change', render);
 document.getElementById('categoryFilter').addEventListener('change', render);
-document.getElementById('loadCsvBtn').addEventListener('click', () => loadFromText(document.getElementById('csvInput').value));
-document.getElementById('sampleBtn').addEventListener('click', () => {
-  document.getElementById('csvInput').value = SAMPLE_CSV;
-  loadFromText(SAMPLE_CSV);
-});
+
 
 runTests();
 loadFromSheet();
