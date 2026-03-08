@@ -310,7 +310,6 @@ textarea{
     <select id="categoryFilter">
       <option value="All">All categories</option>
     </select>
-    <button id="loadBtn">Load from Sheet</button>
   </section>
 
   <section class="panel">
@@ -465,7 +464,7 @@ function normalize(records){
     batch: r['Batch ID'] || '',
     title: r['Book Title'] || '',
     author: r['Author'] || '',
-    price: r['Price'] || r['Suggested Price'] || '',
+    price: r['Price'] || r['Suggested Price ($)'] || '',
     notes: r['Notes'] || '',
     img: r['Picture Link'] || '',
     category: ''
@@ -589,9 +588,9 @@ function render(){
       </div>
       <div class="book-body">
         <div class="book-title">${escapeHtml(b.title)}</div>
-        <div class="book-author">${escapeHtml(b.author || 'Unknown author')}</div>
+        <div class="book-author">${b.author ? escapeHtml(b.author) : ''}</div>
         <div class="book-price">${formatPrice(b.price)}</div>
-        <div class="book-notes">${escapeHtml(b.notes || 'No notes provided.')}</div>
+        <div class="book-notes">${b.notes ? escapeHtml(b.notes) : ''}</div>
         <div class="meta">
           <span>${escapeHtml(b.category)}</span>
           <span>${b.batch ? `Batch ${escapeHtml(b.batch)}` : ''}</span>
@@ -661,7 +660,6 @@ function runTests(){
 document.getElementById('search').addEventListener('input', render);
 document.getElementById('sort').addEventListener('change', render);
 document.getElementById('categoryFilter').addEventListener('change', render);
-document.getElementById('loadBtn').addEventListener('click', loadFromSheet);
 document.getElementById('loadCsvBtn').addEventListener('click', () => loadFromText(document.getElementById('csvInput').value));
 document.getElementById('sampleBtn').addEventListener('click', () => {
   document.getElementById('csvInput').value = SAMPLE_CSV;
@@ -669,6 +667,7 @@ document.getElementById('sampleBtn').addEventListener('click', () => {
 });
 
 runTests();
+loadFromSheet();
 </script>
 </body>
 </html>
