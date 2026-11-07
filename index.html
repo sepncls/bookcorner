@@ -440,7 +440,7 @@ function extractGoogleDriveId(url){
 
 function normalizeImageUrl(url){
   const raw = String(url || '').trim();
-  if(!raw) return '';
+  if(!raw) return { original: '', candidates: [] };
 
   const driveId = extractGoogleDriveId(raw);
   if(driveId){
